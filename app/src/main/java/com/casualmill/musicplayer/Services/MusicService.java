@@ -30,6 +30,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private final IBinder serviceBinder = new MusicBinder();
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        player.stop();
+        player.release();
+    }
+
+    @Override
     public void onCreate(){
         super.onCreate();
 
@@ -98,8 +105,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public boolean onUnbind(Intent intent){
-        player.stop();
-        player.release();
         return false;
     }
 

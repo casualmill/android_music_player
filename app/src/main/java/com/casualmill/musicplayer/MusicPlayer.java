@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
-import android.provider.MediaStore;
 
 import com.casualmill.musicplayer.Services.MusicService;
 import com.casualmill.musicplayer.models.Track;
@@ -36,6 +35,10 @@ public class MusicPlayer {
 
     public static void setServiceTrackList(ArrayList<Track> tracks) {
         currentPlayList = tracks;
+
+        if (tracks == null)
+            return;
+
         ArrayList<Long> ids = new ArrayList<>();
         for (Track t : tracks) {
             ids.add(t.id);
@@ -56,7 +59,6 @@ public class MusicPlayer {
             musicService.player.pause();
         else
             musicService.player.start();
-
         return musicService.player.isPlaying();
     }
 
@@ -69,13 +71,15 @@ public class MusicPlayer {
     }
 
     public static void seekToPosition(int pos) {
-        int position = (int)(musicService.player.getDuration() * (pos / 100f));
-        musicService.player.seekTo(position);
+        if (musicService.player.isPlaying()) {
+            int position = (int) (musicService.player.getDuration() * (pos / 100f));
+            musicService.player.seekTo(position);
+        }
     }
 
     // Returns progress in [0, 100]
     public static int getProgress() {
-        if (serviceBound) {
+        if (serviceBound && musicService.player.isPlaying()) {
             MediaPlayer player = musicService.player;
             return player.getCurrentPosition() * 100 / player.getDuration();
         } else {
