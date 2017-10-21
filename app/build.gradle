@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    buildToolsVersion "26.0.2"
     defaultConfig {
         applicationId "com.casualmill.musicplayer"
         minSdkVersion 19
@@ -30,6 +30,7 @@ dependencies {
     compile 'com.android.support:support-vector-drawable:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:support-v4:26.+'
+
 
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.sothree.slidinguppanel:library:3.4.0'

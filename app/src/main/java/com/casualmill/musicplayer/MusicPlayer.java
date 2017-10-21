@@ -21,10 +21,10 @@ import java.util.ArrayList;
 
 public class MusicPlayer {
 
+    public static ArrayList<Track> currentPlayList;
     private static MusicService musicService;
     private static Intent musicIntent;
     private static boolean serviceBound = false;
-    private static ArrayList<Track> currentPlayList;
 
     public static void init(Context ctx) {
         if (musicIntent == null) {
@@ -69,6 +69,15 @@ public class MusicPlayer {
                 )
         );
         return musicService.player.isPlaying();
+    }
+
+    public static Track getTrackfromPlaylist(long track_id) {
+        for (Track t : currentPlayList) {
+            if (t.id == track_id) {
+                return t;
+            }
+        }
+        return null;
     }
 
     public static void playNext() {

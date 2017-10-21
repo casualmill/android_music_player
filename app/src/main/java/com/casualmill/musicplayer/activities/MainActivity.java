@@ -11,15 +11,21 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
+import com.casualmill.musicplayer.GlideApp;
+import com.casualmill.musicplayer.MusicData;
 import com.casualmill.musicplayer.MusicPlayer;
 import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.adapters.MainPagerAdapter;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
+import com.casualmill.musicplayer.models.Track;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -43,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     public static final boolean DEVELOPER_MODE = true;
 
     // main_info collector
+    private TextView track_title, track_author;
+    private Button main_play_btn, sec_play_btn;
+    private ImageView main_albumArt, sec_albumArt;
     private SeekBar seekBar;
     private boolean update_ui = false;
     private Handler handler = new Handler();
@@ -110,6 +119,10 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         setContentView(R.layout.activity_main);
 
+        // toolbar
+        Toolbar toolBar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolBar);
+
         // setup ViewPager
         ViewPager pager = (ViewPager)findViewById(R.id.viewPager);
         MainPagerAdapter pagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager());
@@ -120,15 +133,26 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(pager);
 
         // Play Button
-        Button playButton = (Button)findViewById(R.id.button_play);
-        playButton.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener playBtnListener = new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View v) {
                 MusicPlayer.playPause();
             }
-        });
+        };
+        main_play_btn = findViewById(R.id.button_play);
+        main_play_btn.setOnClickListener(playBtnListener);
+        sec_play_btn = findViewById(R.id.sec_play_button);
+        sec_play_btn.setOnClickListener(playBtnListener);
 
-        Button prevButton = (Button)findViewById(R.id.button_prev);
+        // TextViews
+        track_title = findViewById(R.id.track_title);
+        track_author = findViewById(R.id.track_author);
+
+        // AlbumArts
+        main_albumArt = findViewById(R.id.np_img_main);
+        sec_albumArt = findViewById(R.id.np_img_sec);
+
+        Button prevButton = findViewById(R.id.button_prev);
         prevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -136,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button nextButton = (Button)findViewById(R.id.button_next);
+        Button nextButton = findViewById(R.id.button_next);
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -145,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Seeker
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBar = findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -162,17 +186,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMusicServiceEvent(MusicServiceEvent event) {
-        switch (event.eventType) {
-            case COMPLETED:
-                update_ui = false;
-                break;
-            case PLAYING:
-                update_ui = true;
-                handler.post(mediaInfo_looper);
-                break;
-            case PAUSED:
-                update_ui = false;
-                break;
+        Track currentTrack = MusicPlayer.getTrackfromPlaylist(event.track_id);
+
+        // timed seekbar update only when is playing
+        update_ui = event.eventType == MusicServiceEvent.EventType.PLAYING;
+        if (update_ui) handler.post(mediaInfo_looper); // trigger the start
+
+        if (event.eventType != MusicServiceEvent.EventType.COMPLETED) {
+            track_author.setText(currentTrack.artistName);
+            track_title.setText(currentTrack.title);
+            MusicData.setAlbumArt(this, currentTrack.albumId, main_albumArt);
+            MusicData.setAlbumArt(this, currentTrack.albumId, sec_albumArt);
+        } else {
+            track_author.setText("");
+            track_title.setText("");
         }
         Log.e("SERVICE", event.eventType + " " + event.track_id);
     }

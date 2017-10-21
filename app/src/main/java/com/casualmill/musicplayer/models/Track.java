@@ -14,6 +14,8 @@ public class Track {
     public final long albumId;
     public final long artistId;
 
+
+
     public Track(long _id, String _title, String _artistName, String _albumName, int _duration, int _trackNumber, long _artistId, long _albumId) {
         this.id = _id;
         this.title = _title;
