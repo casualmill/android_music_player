@@ -1,16 +1,17 @@
 package com.casualmill.musicplayer.activities;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -18,22 +19,39 @@ import android.widget.SeekBar;
 import com.casualmill.musicplayer.MusicPlayer;
 import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.adapters.MainPagerAdapter;
+import com.casualmill.musicplayer.events.MusicServiceEvent;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+/**
+ * MainActivity.java
+ * - Starting point of the application
+ * - onCreate
+ *      checks for permissions
+ *          READ EXTERNAL STORAGE
+ *      if has_permission:
+ *          init()
+ *              set activity_main.xml
+ *              setup ViewPager, TabLayout, link buttons
+ *
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 899;
+    public static final boolean DEVELOPER_MODE = true;
 
-    // for
-    private boolean isPaused;
-    private Handler handler = new Handler();
+    // main_info collector
     private SeekBar seekBar;
-    Runnable onEverySecond = new Runnable() {
-
+    private boolean update_ui = false;
+    private Handler handler = new Handler();
+    private Runnable mediaInfo_looper = new Runnable() {
         @Override
         public void run() {
-            if(!isPaused){
+            if (update_ui) {
                 seekBar.setProgress(MusicPlayer.getProgress());
-                handler.postDelayed(onEverySecond, 600);
+                handler.postDelayed(this, 100);
             }
         }
     };
@@ -41,7 +59,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        if (DEVELOPER_MODE) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build());
+
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build());
+        }
 
         // Permission has to be given by the user.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
@@ -67,8 +96,7 @@ public class MainActivity extends AppCompatActivity {
                         .show();
 
                 // close the app after 1second
-                Handler h = new Handler();
-                h.postDelayed(
+                handler.postDelayed(
                         new Runnable() {
                             @Override
                             public void run() {
@@ -80,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
+        setContentView(R.layout.activity_main);
+
         // setup ViewPager
         ViewPager pager = (ViewPager)findViewById(R.id.viewPager);
         MainPagerAdapter pagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager());
@@ -94,8 +124,7 @@ public class MainActivity extends AppCompatActivity {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                boolean playing = MusicPlayer.playPause();
-                // change the picture based on playing bool
+                MusicPlayer.playPause();
             }
         });
 
@@ -131,22 +160,44 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMusicServiceEvent(MusicServiceEvent event) {
+        switch (event.eventType) {
+            case COMPLETED:
+                update_ui = false;
+                break;
+            case PLAYING:
+                update_ui = true;
+                handler.post(mediaInfo_looper);
+                break;
+            case PAUSED:
+                update_ui = false;
+                break;
+        }
+        Log.e("SERVICE", event.eventType + " " + event.track_id);
+    }
+
     @Override
     protected void onStart(){
         super.onStart();
         MusicPlayer.init(getApplicationContext());
+
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        isPaused = false;
-        handler.postDelayed(onEverySecond, 1000);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        isPaused = true;
     }
 }

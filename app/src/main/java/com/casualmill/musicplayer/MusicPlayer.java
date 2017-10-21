@@ -7,13 +7,16 @@ import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 
-import com.casualmill.musicplayer.Services.MusicService;
+import com.casualmill.musicplayer.events.MusicServiceEvent;
 import com.casualmill.musicplayer.models.Track;
+import com.casualmill.musicplayer.services.MusicService;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 
 /**
- * Created by Ali on 08-14-2017.
+ * Created by Fahim on 08-14-2017.
  */
 
 public class MusicPlayer {
@@ -21,17 +24,16 @@ public class MusicPlayer {
     private static MusicService musicService;
     private static Intent musicIntent;
     private static boolean serviceBound = false;
-    private static Context context;
     private static ArrayList<Track> currentPlayList;
 
     public static void init(Context ctx) {
-        context = ctx;
         if (musicIntent == null) {
-            musicIntent = new Intent(context, MusicService.class);
-            context.bindService(musicIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            context.startService(musicIntent);
+            musicIntent = new Intent(ctx, MusicService.class);
+            ctx.bindService(musicIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            ctx.startService(musicIntent);
         }
     }
+
 
     public static void setServiceTrackList(ArrayList<Track> tracks) {
         currentPlayList = tracks;
@@ -59,6 +61,13 @@ public class MusicPlayer {
             musicService.player.pause();
         else
             musicService.player.start();
+
+        EventBus.getDefault().post(
+                new MusicServiceEvent(
+                        musicService.player.isPlaying() ? MusicServiceEvent.EventType.PLAYING : MusicServiceEvent.EventType.PAUSED,
+                        musicService.track_ids.get(musicService.trackPosition)
+                )
+        );
         return musicService.player.isPlaying();
     }
 
@@ -99,6 +108,7 @@ public class MusicPlayer {
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
+            musicService = null;
             serviceBound = false;
         }
     };

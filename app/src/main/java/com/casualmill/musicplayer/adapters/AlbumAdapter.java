@@ -39,7 +39,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.Holder>{
 
         holder.albumName.setText(tr.title);
         holder.artist.setText(tr.artistName);
-        holder.albumArt.setImageBitmap(MusicData.getAlbumCoverArt(holder.itemView.getContext(), tr.id));
+        MusicData.setAlbumArt(holder.itemView.getContext(), tr.id, holder.albumArt);
     }
 
     @Override

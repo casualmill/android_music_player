@@ -8,7 +8,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
+import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.TransitionOptions;
+import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.casualmill.musicplayer.models.Album;
 import com.casualmill.musicplayer.models.Track;
 
@@ -20,6 +26,8 @@ import java.util.ArrayList;
  */
 
 public class MusicData {
+
+    private static final Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
 
     public static ArrayList<Track> getAllTracks(Context context) {
         return getAllTracks(context, -1);
@@ -100,14 +108,14 @@ public class MusicData {
     }
 
 
-    public static Bitmap getAlbumCoverArt(Context context, long album_id) {
-        try {
-            Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
-            Uri uri = ContentUris.withAppendedId(sArtworkUri, album_id);
-            ContentResolver res = context.getContentResolver();
-            InputStream in = res.openInputStream(uri);
-            return BitmapFactory.decodeStream(in);
-        } catch (Exception e) {}
-        return null;
+    public static void setAlbumArt(Context context, long album_id, ImageView view) {
+        Log.e("ALBUM ID", String.valueOf(album_id));
+        GlideApp
+            .with(context)
+            .load(ContentUris.withAppendedId(sArtworkUri, album_id))
+            .placeholder(R.drawable.albumart_default)
+            .transition(DrawableTransitionOptions.withCrossFade(500))
+            .centerCrop()
+            .into(view);
     }
 }

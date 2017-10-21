@@ -1,9 +1,6 @@
 package com.casualmill.musicplayer.adapters;
 
 import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.os.PowerManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,10 +11,7 @@ import android.widget.TextView;
 import com.casualmill.musicplayer.MusicData;
 import com.casualmill.musicplayer.MusicPlayer;
 import com.casualmill.musicplayer.R;
-import com.casualmill.musicplayer.Services.MusicService;
-import com.casualmill.musicplayer.activities.MainActivity;
 import com.casualmill.musicplayer.models.Track;
-import com.casualmill.musicplayer.Services.MusicService;
 
 import java.util.ArrayList;
 
@@ -60,7 +54,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.Holder>{
 
         holder.title.setText(tr.title);
         holder.artist.setText(tr.artistName);
-        holder.albumArt.setImageBitmap(MusicData.getAlbumCoverArt(holder.itemView.getContext(), tr.albumId));
+        MusicData.setAlbumArt(holder.itemView.getContext(), tr.albumId, holder.albumArt);
     }
 
     @Override

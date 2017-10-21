@@ -16,7 +16,7 @@ import com.casualmill.musicplayer.fragments.TracksFragment;
 
 public class MainPagerAdapter extends FragmentPagerAdapter {
 
-    private final static int NUM_PAGES = 3;
+    private final int NUM_PAGES = 3;
     private Context context;
 
     public MainPagerAdapter(Context context, FragmentManager fm) {

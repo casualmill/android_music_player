@@ -1,4 +1,4 @@
-package com.casualmill.musicplayer.Services;
+package com.casualmill.musicplayer.services;
 
 import android.app.Service;
 import android.content.ContentUris;
@@ -13,7 +13,9 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.casualmill.musicplayer.models.Track;
+import com.casualmill.musicplayer.events.MusicServiceEvent;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 
@@ -64,9 +66,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         player.reset();
 
         //get trackId to play
-        long trackId=track_ids.get(trackPosition);
-        Uri trackUri= ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,trackId);
+        long trackId = track_ids.get(trackPosition);
+        Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,trackId);
 
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PREPARING, trackId));
         try{
             player.setDataSource(getApplicationContext(),trackUri);
         }
@@ -111,6 +114,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         playNext();
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.COMPLETED, track_ids.get(trackPosition)));
     }
 
     @Override
@@ -121,6 +125,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         mediaPlayer.start();
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PLAYING, track_ids.get(trackPosition)));
     }
 
     public class MusicBinder extends Binder{
