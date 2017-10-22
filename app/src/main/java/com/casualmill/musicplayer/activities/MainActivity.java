@@ -2,6 +2,7 @@ package com.casualmill.musicplayer.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.StrictMode;
@@ -9,16 +10,19 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.arlib.floatingsearchview.FloatingSearchView;
 import com.casualmill.musicplayer.GlideApp;
 import com.casualmill.musicplayer.MusicData;
 import com.casualmill.musicplayer.MusicPlayer;
@@ -26,6 +30,7 @@ import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.adapters.MainPagerAdapter;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
 import com.casualmill.musicplayer.models.Track;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -64,6 +69,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    // BACK_KEY handler
+    private SlidingUpPanelLayout slidingUpPanelLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,9 +127,16 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         setContentView(R.layout.activity_main);
 
+        slidingUpPanelLayout = findViewById(R.id.slidingUpPanel);
+
         // toolbar
-        Toolbar toolBar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolBar);
+        // Toolbar toolBar = findViewById(R.id.toolbar);
+        // setSupportActionBar(toolBar);
+
+        // floatingSearchView
+        FloatingSearchView floatingSearchView = findViewById(R.id.floating_search_view);
+        DrawerLayout drawerLayoutl = findViewById(R.id.navigation_drawer);
+        floatingSearchView.attachNavigationDrawerToMenuButton(drawerLayoutl);
 
         // setup ViewPager
         ViewPager pager = (ViewPager)findViewById(R.id.viewPager);
@@ -192,6 +207,8 @@ public class MainActivity extends AppCompatActivity {
         update_ui = event.eventType == MusicServiceEvent.EventType.PLAYING;
         if (update_ui) handler.post(mediaInfo_looper); // trigger the start
 
+        main_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause_filled : R.drawable.play_filled);
+        sec_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause : R.drawable.play);
         if (event.eventType != MusicServiceEvent.EventType.COMPLETED) {
             track_author.setText(currentTrack.artistName);
             track_title.setText(currentTrack.title);
@@ -202,6 +219,17 @@ public class MainActivity extends AppCompatActivity {
             track_title.setText("");
         }
         Log.e("SERVICE", event.eventType + " " + event.track_id);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
