@@ -41,13 +41,9 @@ public class MusicPlayer {
         if (tracks == null)
             return;
 
-        ArrayList<Long> ids = new ArrayList<>();
-        for (Track t : tracks) {
-            ids.add(t.id);
-        }
         if (serviceBound) {
-            musicService.track_ids = ids;
-            musicService.trackPosition = 0;
+            musicService.tracks = tracks;
+            musicService.trackPosition = -1;
         }
     }
 
@@ -57,27 +53,20 @@ public class MusicPlayer {
     }
 
     public static boolean playPause() {
-        if (musicService.player.isPlaying())
-            musicService.player.pause();
+        // even if not initialized, player will call onComplete which will call playNext()
+        if (musicService.mPlayer.isPlaying())
+            musicService.mPlayer.pause();
         else
-            musicService.player.start();
+            musicService.mPlayer.start();
 
-        EventBus.getDefault().post(
-                new MusicServiceEvent(
-                        musicService.player.isPlaying() ? MusicServiceEvent.EventType.PLAYING : MusicServiceEvent.EventType.PAUSED,
-                        musicService.track_ids.get(musicService.trackPosition)
-                )
-        );
-        return musicService.player.isPlaying();
-    }
-
-    public static Track getTrackfromPlaylist(long track_id) {
-        for (Track t : currentPlayList) {
-            if (t.id == track_id) {
-                return t;
-            }
-        }
-        return null;
+        if (musicService.trackPosition >= 0)
+            EventBus.getDefault().post(
+                    new MusicServiceEvent(
+                            musicService.mPlayer.isPlaying() ? MusicServiceEvent.EventType.PLAYING : MusicServiceEvent.EventType.PAUSED,
+                            musicService.tracks.get(musicService.trackPosition)
+                    )
+            );
+        return musicService.mPlayer.isPlaying();
     }
 
     public static void playNext() {
@@ -89,16 +78,16 @@ public class MusicPlayer {
     }
 
     public static void seekToPosition(int pos) {
-        if (musicService.player.isPlaying()) {
-            int position = (int) (musicService.player.getDuration() * (pos / 100f));
-            musicService.player.seekTo(position);
+        if (musicService.mPlayer.isPlaying()) {
+            int position = (int) (musicService.mPlayer.getDuration() * (pos / 100f));
+            musicService.mPlayer.seekTo(position);
         }
     }
 
     // Returns progress in [0, 100]
     public static int getProgress() {
-        if (serviceBound && musicService.player.isPlaying()) {
-            MediaPlayer player = musicService.player;
+        if (serviceBound && musicService.mPlayer.isPlaying()) {
+            MediaPlayer player = musicService.mPlayer;
             return player.getCurrentPosition() * 100 / player.getDuration();
         } else {
             return 0;

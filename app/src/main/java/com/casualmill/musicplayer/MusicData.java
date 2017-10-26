@@ -109,13 +109,18 @@ public class MusicData {
 
 
     public static void setAlbumArt(Context context, long album_id, ImageView view) {
-        Log.e("ALBUM ID", String.valueOf(album_id));
-        GlideApp
-            .with(context)
-            .load(ContentUris.withAppendedId(sArtworkUri, album_id))
-            .placeholder(R.drawable.albumart_default)
-            .transition(DrawableTransitionOptions.withCrossFade(500))
-            .centerCrop()
-            .into(view);
+        if (album_id == -1) // clear
+            GlideApp
+                .with(context)
+                .load(R.drawable.albumart_default)
+                .into(view);
+        else
+            GlideApp
+                .with(context)
+                .load(ContentUris.withAppendedId(sArtworkUri, album_id))
+                .placeholder(R.drawable.albumart_default)
+                .transition(DrawableTransitionOptions.withCrossFade(500))
+                .centerCrop()
+                .into(view);
     }
 }

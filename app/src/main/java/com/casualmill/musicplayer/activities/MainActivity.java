@@ -13,6 +13,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         super.onCreate(savedInstanceState);
 
         if (DEVELOPER_MODE) {
@@ -201,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMusicServiceEvent(MusicServiceEvent event) {
-        Track currentTrack = MusicPlayer.getTrackfromPlaylist(event.track_id);
 
         // timed seekbar update only when is playing
         update_ui = event.eventType == MusicServiceEvent.EventType.PLAYING;
@@ -210,15 +211,17 @@ public class MainActivity extends AppCompatActivity {
         main_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause_filled : R.drawable.play_filled);
         sec_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause : R.drawable.play);
         if (event.eventType != MusicServiceEvent.EventType.COMPLETED) {
-            track_author.setText(currentTrack.artistName);
-            track_title.setText(currentTrack.title);
-            MusicData.setAlbumArt(this, currentTrack.albumId, main_albumArt);
-            MusicData.setAlbumArt(this, currentTrack.albumId, sec_albumArt);
+            track_author.setText(event.track_id.artistName);
+            track_title.setText(event.track_id.title);
+            MusicData.setAlbumArt(this, event.track_id.albumId, main_albumArt);
+            MusicData.setAlbumArt(this, event.track_id.albumId, sec_albumArt);
         } else {
             track_author.setText("");
             track_title.setText("");
+
+            MusicData.setAlbumArt(this, -1, main_albumArt);
+            MusicData.setAlbumArt(this, -1, sec_albumArt);
         }
-        Log.e("SERVICE", event.eventType + " " + event.track_id);
     }
 
     @Override

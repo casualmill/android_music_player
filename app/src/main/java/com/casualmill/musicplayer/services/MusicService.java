@@ -1,7 +1,11 @@
 package com.casualmill.musicplayer.services;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -11,9 +15,15 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.v4.media.app.NotificationCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
+import com.casualmill.musicplayer.R;
+import com.casualmill.musicplayer.activities.MainActivity;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
+import com.casualmill.musicplayer.models.Track;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -25,65 +35,93 @@ import java.util.ArrayList;
 
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,MediaPlayer.OnCompletionListener {
 
-    public MediaPlayer player;
-    public ArrayList<Long> track_ids;
-    public int trackPosition = 0;
+
+    public MediaPlayer mPlayer;
+    private MediaSessionCompat mSession;
+    private MediaControllerCompat mController;
+
+    public ArrayList<Track> tracks;
+    public int trackPosition = -1;
+    public static final int NOTIFICATION_ID = 95;
 
     private final IBinder serviceBinder = new MusicBinder();
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        player.stop();
-        player.release();
+        mPlayer.stop();
+        mPlayer.release();
     }
 
     @Override
     public void onCreate(){
         super.onCreate();
 
-        this.InitializeMusicPlayer();
+        this.initService();
     }
 
-    public void InitializeMusicPlayer()
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (mSession == null)
+            this.initService();
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void initService()
     {
         //Initializing MusicPlayer and its properties
-        player = new MediaPlayer();
+        mPlayer = new MediaPlayer();
 
         // WAKELOCK permission is required to use this method
         // Keeps the phone awake partially to allow the playback
-        player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+        mPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
         //Setting which type of audio should be played
-        player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        player.setOnPreparedListener(this);
-        player.setOnCompletionListener(this);
-        player.setOnErrorListener(this);
+        mPlayer.setOnPreparedListener(this);
+        mPlayer.setOnCompletionListener(this);
+        mPlayer.setOnErrorListener(this);
+
+        mSession = new MediaSessionCompat(this, "MediaSession");
+        mSession.setCallback(new MediaSessionCompat.Callback() {
+            @Override
+            public void onPlay() {
+                super.onPlay();
+                playTrack();
+            }
+
+            @Override
+            public void onPause() {
+                super.onPause();
+                mPlayer.pause();
+            }
+        });
     }
 
     public void playTrack(){
-        player.reset();
+        mPlayer.reset();
 
         //get trackId to play
-        long trackId = track_ids.get(trackPosition);
-        Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,trackId);
+        Track track = tracks.get(trackPosition);
+        Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, track.id);
 
-        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PREPARING, trackId));
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PREPARING, track));
         try{
-            player.setDataSource(getApplicationContext(),trackUri);
+            mPlayer.setDataSource(getApplicationContext(),trackUri);
         }
         catch (Exception ex){
-            Log.e("Music Player","Error occured while setting data source",ex);
+            Log.e("Music Player","Error occurred while setting data source",ex);
         }
-        player.prepareAsync();
+        mPlayer.prepareAsync();
 
     }
 
     public void playNext() {
-        if (track_ids == null || track_ids.size() == 0)
+        if (tracks == null || tracks.size() == 0)
             return;
-        else if (trackPosition == track_ids.size())
+        else if (trackPosition == tracks.size())
             trackPosition = 0;
         else
             trackPosition++;
@@ -91,13 +129,63 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void playPrevious() {
-        if (track_ids == null || track_ids.size() == 0)
+        if (tracks == null || tracks.size() == 0)
             return;
         else if (trackPosition == 0)
-            trackPosition = track_ids.size() - 1;
+            trackPosition = tracks.size() - 1;
         else
             trackPosition--;
         playTrack();
+    }
+
+    private void notificationManager(MusicServiceEvent.EventType type) {
+        NotificationCompat n = createNotification();
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        switch (type) {
+            case PAUSED:
+            case PLAYING:
+                //manager.notify(NOTIFICATION_ID, n);
+                break;
+            case COMPLETED:
+            case STOPPED:
+                manager.cancel(NOTIFICATION_ID);
+                break;
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+    }
+
+    private Notification createNotification() {
+        Notification.Builder builder = new Notification.Builder(this);
+
+        // prev
+
+        // play/pause
+        String label;
+        int icon;
+        PendingIntent playPauseIntent;
+        if (mPlayer.isPlaying()) {
+            label = getString(R.string.pause);
+            icon = R.drawable.pause;
+            //intent = mPauseIntent;
+        } else {
+            label = getString(R.string.play);
+            icon = R.drawable.play;
+            //intent = mPlayIntent;
+        }
+        //builder.addAction(icon, label, intent);
+
+        // next
+
+        // ContentIntent
+        Intent contentIntent = new Intent(this, MainActivity.class);
+        PendingIntent pContentIntent = PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        builder.setContentTitle("Music Player");
+        builder.setContentText("Track 1");
+        builder.setContentIntent(pContentIntent);
+        //builder.setStyle(new NotificationCompat.MediaStyle()); need compat for this
+
+        return builder.build();
     }
 
     @Nullable
@@ -114,7 +202,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         playNext();
-        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.COMPLETED, track_ids.get(trackPosition)));
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.COMPLETED, tracks.get(trackPosition)));
     }
 
     @Override
@@ -125,7 +213,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         mediaPlayer.start();
-        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PLAYING, track_ids.get(trackPosition)));
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PLAYING, tracks.get(trackPosition)));
     }
 
     public class MusicBinder extends Binder{
