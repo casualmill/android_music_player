@@ -11,12 +11,16 @@ import com.casualmill.musicplayer.models.Track;
 public class MusicServiceEvent {
 
     public EventType eventType;
-    public Track track_id;
+    public Object data;
 
-    public MusicServiceEvent(EventType type, Track track_id) {
+    public MusicServiceEvent(EventType type, Object data) {
         this.eventType = type;
-        this.track_id = track_id;
+        this.data = data;
     }
 
-    public enum EventType { PREPARING, PLAYING, PAUSED, COMPLETED, STOPPED }
+    public enum EventType {
+        INIT, // data-> MediaSessionCompat.Token
+        PREPARING, PLAYING, RESUMED, PAUSED, COMPLETED, STOPPED // track
+    }
+
 }

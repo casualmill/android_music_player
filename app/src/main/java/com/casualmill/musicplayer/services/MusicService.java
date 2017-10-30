@@ -15,7 +15,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import android.support.v4.media.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
@@ -49,6 +49,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mSession.release();
         mPlayer.stop();
         mPlayer.release();
     }
@@ -98,6 +99,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 mPlayer.pause();
             }
         });
+        mSession.setActive(true);
+        EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.INIT, mSession.getSessionToken()));
     }
 
     public void playTrack(){
@@ -139,7 +142,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     private void notificationManager(MusicServiceEvent.EventType type) {
-        NotificationCompat n = createNotification();
+        Notification n = createNotification();
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         switch (type) {
             case PAUSED:
@@ -151,11 +154,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 manager.cancel(NOTIFICATION_ID);
                 break;
         }
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        Notification.Builder builder = new Notification.Builder(this);
     }
 
     private Notification createNotification() {
-        Notification.Builder builder = new Notification.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         // prev
 

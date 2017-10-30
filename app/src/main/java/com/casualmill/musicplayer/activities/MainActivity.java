@@ -9,6 +9,7 @@ import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -208,19 +209,39 @@ public class MainActivity extends AppCompatActivity {
         update_ui = event.eventType == MusicServiceEvent.EventType.PLAYING;
         if (update_ui) handler.post(mediaInfo_looper); // trigger the start
 
+        // display pause icon only when playing
         main_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause_filled : R.drawable.play_filled);
         sec_play_btn.setBackgroundResource(event.eventType == MusicServiceEvent.EventType.PLAYING ? R.drawable.pause : R.drawable.play);
-        if (event.eventType != MusicServiceEvent.EventType.COMPLETED) {
-            track_author.setText(event.track_id.artistName);
-            track_title.setText(event.track_id.title);
-            MusicData.setAlbumArt(this, event.track_id.albumId, main_albumArt);
-            MusicData.setAlbumArt(this, event.track_id.albumId, sec_albumArt);
-        } else {
-            track_author.setText("");
-            track_title.setText("");
 
-            MusicData.setAlbumArt(this, -1, main_albumArt);
-            MusicData.setAlbumArt(this, -1, sec_albumArt);
+        switch (event.eventType) {
+            case INIT:
+                // token for MediaController
+                MusicPlayer.setToken(this, (MediaSessionCompat.Token) event.data);
+                break;
+            case COMPLETED:
+            case STOPPED:
+            case PREPARING:
+                track_author.setText("");
+                track_title.setText("");
+
+                MusicData.setAlbumArt(this, -1, main_albumArt);
+                MusicData.setAlbumArt(this, -1, sec_albumArt);
+                break;
+            case PLAYING:
+                Track tr = (Track) event.data;
+                track_author.setText(tr.artistName);
+                track_title.setText(tr.title);
+                MusicData.setAlbumArt(this, tr.albumId, main_albumArt);
+                MusicData.setAlbumArt(this, tr.albumId, sec_albumArt);
+                break;
+            case PAUSED:
+            case RESUMED:
+                break;
+        }
+        if (event.eventType != MusicServiceEvent.EventType.COMPLETED) {
+
+        } else {
+
         }
     }
 

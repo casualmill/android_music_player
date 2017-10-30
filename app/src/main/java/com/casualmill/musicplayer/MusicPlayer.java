@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 
 import com.casualmill.musicplayer.events.MusicServiceEvent;
 import com.casualmill.musicplayer.models.Track;
@@ -25,12 +28,22 @@ public class MusicPlayer {
     private static MusicService musicService;
     private static Intent musicIntent;
     private static boolean serviceBound = false;
+    private static MediaControllerCompat mContoller;
 
     public static void init(Context ctx) {
         if (musicIntent == null) {
             musicIntent = new Intent(ctx, MusicService.class);
             ctx.bindService(musicIntent, musicConnection, Context.BIND_AUTO_CREATE);
             ctx.startService(musicIntent);
+
+        }
+    }
+
+    public static void setToken(Context ctx, MediaSessionCompat.Token token) {
+        try {
+            mContoller = new MediaControllerCompat(ctx, token);
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
