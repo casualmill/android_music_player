@@ -7,8 +7,10 @@ import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import com.casualmill.musicplayer.events.MusicServiceEvent;
 import com.casualmill.musicplayer.models.Track;
@@ -28,7 +30,7 @@ public class MusicPlayer {
     private static MusicService musicService;
     private static Intent musicIntent;
     private static boolean serviceBound = false;
-    private static MediaControllerCompat mContoller;
+    private static MediaControllerCompat mController;
 
     public static void init(Context ctx) {
         if (musicIntent == null) {
@@ -41,7 +43,7 @@ public class MusicPlayer {
 
     public static void setToken(Context ctx, MediaSessionCompat.Token token) {
         try {
-            mContoller = new MediaControllerCompat(ctx, token);
+            mController = new MediaControllerCompat(ctx, token);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -67,6 +69,7 @@ public class MusicPlayer {
 
     public static boolean playPause() {
         // even if not initialized, player will call onComplete which will call playNext()
+        /*
         if (musicService.mPlayer.isPlaying())
             musicService.mPlayer.pause();
         else
@@ -80,31 +83,36 @@ public class MusicPlayer {
                     )
             );
         return musicService.mPlayer.isPlaying();
+        */
+        if (mController == null) return false;
+
+        if (mController.getPlaybackState() != null && mController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING)
+            mController.getTransportControls().pause();
+        else
+            mController.getTransportControls().play();
+
+        return true;
     }
 
     public static void playNext() {
-        musicService.playNext();
+        if (mController == null) return;
+        mController.getTransportControls().skipToNext();
     }
 
     public static void playPrevious() {
-        musicService.playPrevious();
+        if (mController == null) return;
+        mController.getTransportControls().skipToPrevious();
     }
 
     public static void seekToPosition(int pos) {
-        if (musicService.mPlayer.isPlaying()) {
-            int position = (int) (musicService.mPlayer.getDuration() * (pos / 100f));
-            musicService.mPlayer.seekTo(position);
-        }
+        if (mController == null) return;
+        mController.getTransportControls().seekTo((long) (mController.getMetadata().getLong(MediaMetadataCompat.METADATA_KEY_DURATION) * (pos / 100f)));
     }
 
     // Returns progress in [0, 100]
     public static int getProgress() {
-        if (serviceBound && musicService.mPlayer.isPlaying()) {
-            MediaPlayer player = musicService.mPlayer;
-            return player.getCurrentPosition() * 100 / player.getDuration();
-        } else {
-            return 0;
-        }
+        if (mController == null) return 0;
+        return (int)(mController.getPlaybackState().getPosition() * 100 / mController.getMetadata().getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
     }
 
     private static ServiceConnection musicConnection = new ServiceConnection() {

@@ -36,7 +36,7 @@ import java.util.ArrayList;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,MediaPlayer.OnCompletionListener {
 
 
-    public MediaPlayer mPlayer;
+    private MediaPlayer mPlayer;
     private MediaSessionCompat mSession;
     private MediaControllerCompat mController;
 
@@ -90,13 +90,45 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             @Override
             public void onPlay() {
                 super.onPlay();
+                Log.e("SERVICE", "onPlay");
                 playTrack();
             }
 
             @Override
             public void onPause() {
                 super.onPause();
+                Log.e("SERVICE", "onPause");
                 mPlayer.pause();
+            }
+
+            @Override
+            public void onPrepare() {
+                super.onPrepare();
+                Log.e("SERVICE", "onPrepare");
+            }
+
+            @Override
+            public void onSkipToNext() {
+                super.onSkipToNext();
+                Log.e("SERVICE", "onSkipToNext");
+            }
+
+            @Override
+            public void onSkipToPrevious() {
+                super.onSkipToPrevious();
+                Log.e("SERVICE", "onSkipToPrev");
+            }
+
+            @Override
+            public void onSeekTo(long pos) {
+                super.onSeekTo(pos);
+                Log.e("SERVICE", "onSeekTo");
+            }
+
+            @Override
+            public void onStop() {
+                super.onStop();
+                Log.e("SERVICE", "onStop");
             }
         });
         mSession.setActive(true);
