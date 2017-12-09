@@ -27,7 +27,16 @@ import java.util.ArrayList;
 
 public class MusicData {
 
+    public static ArrayList<Track> TrackList;
+    public static ArrayList<Album> AlbumList;
+
     private static final Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+
+
+    public static void LoadLists(Context ctx) {
+        TrackList = getAllTracks(ctx);
+        AlbumList = getAllAlbums(ctx);
+    }
 
     public static ArrayList<Track> getAllTracks(Context context) {
         return getAllTracks(context, -1);

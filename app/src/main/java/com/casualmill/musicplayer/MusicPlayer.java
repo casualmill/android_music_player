@@ -111,7 +111,8 @@ public class MusicPlayer {
 
     // Returns progress in [0, 100]
     public static int getProgress() {
-        if (mController == null) return 0;
+        if (mController == null || mController.getPlaybackState() == null) return 0;
+        if (mController.getPlaybackState().getState() != PlaybackStateCompat.STATE_PLAYING) return 0;
         return (int)(mController.getPlaybackState().getPosition() * 100 / mController.getMetadata().getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
     }
 

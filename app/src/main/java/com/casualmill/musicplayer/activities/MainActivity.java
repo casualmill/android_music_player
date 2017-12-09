@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.arlib.floatingsearchview.FloatingSearchView;
 import com.casualmill.musicplayer.GlideApp;
@@ -52,7 +53,6 @@ import org.greenrobot.eventbus.ThreadMode;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 899;
     public static final boolean DEVELOPER_MODE = true;
 
     // main_info collector
@@ -95,37 +95,12 @@ public class MainActivity extends AppCompatActivity {
         // Permission has to be given by the user.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE);
+            Toast.makeText(this, "No Access Permissions", Toast.LENGTH_LONG).show();
+            finish();
         } else
             init();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // permission was granted, yay!
-                init();
-            } else {
-                // I QUIT
-                // viewPager, it doesnt matter anyway. read the docs
-                Snackbar.make(findViewById(R.id.viewPager), "Permission Denied. Bye Bye",
-                        Snackbar.LENGTH_LONG)
-                        .show();
-
-                // close the app after 1second
-                handler.postDelayed(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                finishAffinity();
-                            }
-                        }, 1000);
-            }
-        }
-    }
 
     private void init() {
         setContentView(R.layout.activity_main);
@@ -200,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) { }
         });
+
+        MusicPlayer.init(getApplicationContext());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -259,7 +236,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-        MusicPlayer.init(getApplicationContext());
 
         EventBus.getDefault().register(this);
     }
