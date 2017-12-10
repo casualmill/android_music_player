@@ -10,8 +10,10 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ProgressBar;
 
+import com.casualmill.musicplayer.MusicData;
 import com.casualmill.musicplayer.R;
 
 public class SplashActivity extends AppCompatActivity {
@@ -38,22 +40,33 @@ public class SplashActivity extends AppCompatActivity {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0; i < 100; i++) {
-                    try {
+                Handler handler = new Handler(Looper.getMainLooper());
+                MusicData.LoadLists(SplashActivity.this);
+                try {
+                    for (int i = 0; i < 100; i++) {
+                        final int j = i;
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                pb.setProgress(j);
+                                if (j == 99) pb.setVisibility(View.INVISIBLE);
+                            }
+                        });
+
                         Thread.sleep(10);
-                    } catch (Exception e) {}
-                    final int j = i;
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    }
+                    Thread.sleep(200);
+
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            pb.setProgress(j);
+                            Intent mainActivityIntent = new Intent(SplashActivity.this, MainActivity.class);
+                            //mainActivityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(mainActivityIntent);
+                            finish();
                         }
                     });
-                }
-
-                Intent mainActivityIntent = new Intent(SplashActivity.this, MainActivity.class);
-                mainActivityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(mainActivityIntent);
+                } catch (Exception e) {}
             }
         });
 

@@ -18,8 +18,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import com.casualmill.musicplayer.MusicData;
 import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.activities.MainActivity;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
@@ -91,7 +93,17 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             public void onPlay() {
                 super.onPlay();
                 Log.e("SERVICE", "onPlay");
-                playTrack();
+                if (!mPlayer.isPlaying() && mPlayer.getCurrentPosition() > 1) // resume
+                    mPlayer.start();
+                else
+                    playTrack();
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, mPlayer.getCurrentPosition(), 1).build());
+            }
+
+            @Override
+            public void onSkipToQueueItem(long id) {
+                super.onSkipToQueueItem(id);
             }
 
             @Override
@@ -99,36 +111,48 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 super.onPause();
                 Log.e("SERVICE", "onPause");
                 mPlayer.pause();
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, mPlayer.getCurrentPosition(), 1).build());
             }
 
             @Override
             public void onPrepare() {
                 super.onPrepare();
                 Log.e("SERVICE", "onPrepare");
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_BUFFERING, mPlayer.getCurrentPosition(), 1).build());
             }
 
             @Override
             public void onSkipToNext() {
                 super.onSkipToNext();
                 Log.e("SERVICE", "onSkipToNext");
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, mPlayer.getCurrentPosition(), 1).build());
             }
 
             @Override
             public void onSkipToPrevious() {
                 super.onSkipToPrevious();
                 Log.e("SERVICE", "onSkipToPrev");
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, mPlayer.getCurrentPosition(), 1).build());
             }
 
             @Override
             public void onSeekTo(long pos) {
                 super.onSeekTo(pos);
                 Log.e("SERVICE", "onSeekTo");
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, mPlayer.getCurrentPosition(), 1).build());
             }
 
             @Override
             public void onStop() {
                 super.onStop();
                 Log.e("SERVICE", "onStop");
+
+                mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_STOPPED, mPlayer.getCurrentPosition(), 1).build());
             }
         });
         mSession.setActive(true);
@@ -141,6 +165,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         //get trackId to play
         Track track = tracks.get(trackPosition);
         Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, track.id);
+
+        mSession.setMetadata(MusicData.getTrackMetaData(this, track));
 
         EventBus.getDefault().post(new MusicServiceEvent(MusicServiceEvent.EventType.PREPARING, track));
         try{

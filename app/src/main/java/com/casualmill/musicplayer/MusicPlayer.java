@@ -11,6 +11,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 
 import com.casualmill.musicplayer.events.MusicServiceEvent;
 import com.casualmill.musicplayer.models.Track;
@@ -63,8 +64,8 @@ public class MusicPlayer {
     }
 
     public static void playTrackAtIndex(int index){
-        musicService.trackPosition = index;
-        musicService.playTrack();
+        mController.getTransportControls().skipToQueueItem(index);
+        mController.
     }
 
     public static boolean playPause() {
@@ -86,6 +87,7 @@ public class MusicPlayer {
         */
         if (mController == null) return false;
 
+        Log.e("MusicPlayer", mController.getPlaybackState() + "");
         if (mController.getPlaybackState() != null && mController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING)
             mController.getTransportControls().pause();
         else

@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.v4.media.MediaMetadataCompat;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -32,6 +33,21 @@ public class MusicData {
 
     private static final Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
 
+    public static MediaMetadataCompat getTrackMetaData(Context ctx, Track tr) {
+
+        MediaMetadataCompat.Builder b = new MediaMetadataCompat.Builder();
+        b.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, String.valueOf(tr.id));
+        b.putString(MediaMetadataCompat.METADATA_KEY_TITLE, tr.title);
+        b.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, tr.artistName);
+        b.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, tr.albumName);
+        b.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, tr.duration);
+        b.putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, tr.trackNumber);
+
+        try {
+            b.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, Glide.with(ctx).asBitmap().load(ContentUris.withAppendedId(sArtworkUri, tr.albumId)).into(100, 100).get());
+        } catch (Exception e) {}
+        return b.build();
+    }
 
     public static void LoadLists(Context ctx) {
         TrackList = getAllTracks(ctx);
