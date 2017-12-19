@@ -1,0 +1,2 @@
+# android_music_player
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d455a2be4c49479ab999a1876e896625)](https://www.codacy.com/app/faztp12/android_music_player?utm_source=github.com&utm_medium=referral&utm_content=faztp12/android_music_player&utm_campaign=badger)
