@@ -32,7 +32,9 @@ import com.casualmill.musicplayer.MusicPlayer;
 import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.adapters.MainPagerAdapter;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
+import com.casualmill.musicplayer.fragments.QueueFragment;
 import com.casualmill.musicplayer.models.Track;
+import com.casualmill.musicplayer.utils.UserInterface;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.greenrobot.eventbus.EventBus;
@@ -60,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private Button main_play_btn, sec_play_btn, queue_button;
     private ImageView main_albumArt, sec_albumArt;
     private SeekBar seekBar;
-    private boolean update_ui = false;
+    private boolean update_ui = false, queue_fragment_shown = false;
     private Handler handler = new Handler();
     private Runnable mediaInfo_looper = new Runnable() {
         @Override
@@ -106,14 +108,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         slidingUpPanelLayout = findViewById(R.id.slidingUpPanel);
-        slidingUpPanelLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
-            @Override
-            public void onPanelSlide(View panel, float slideOffset) {
-                sec_play_btn.setAlpha(slideOffset);
-                queue_button.setAlpha(1 - slideOffset);
-            }
-            @Override public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) { }
-        });
 
         // toolbar
         // Toolbar toolBar = findViewById(R.id.toolbar);
@@ -145,6 +139,42 @@ public class MainActivity extends AppCompatActivity {
         sec_play_btn = findViewById(R.id.sec_play_button);
         sec_play_btn.setOnClickListener(playBtnListener);
         queue_button = findViewById(R.id.toggle_track_queue_button);
+        queue_button.setVisibility(View.GONE);
+
+        // Queue Fragment
+        final View queue_fragment_view = findViewById(R.id.queue_fragment);
+        queue_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // queue_fragment_view.animate().alpha(queue_fragment_shown ? 0 : 1).setDuration(500).start();
+                UserInterface.animateViewVisibility(queue_fragment_view, queue_fragment_shown ? View.GONE : View.VISIBLE);
+                queue_fragment_shown = !queue_fragment_shown;
+            }
+        });
+        slidingUpPanelLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+                sec_play_btn.setAlpha(1 - slideOffset);
+                queue_button.setAlpha(slideOffset);
+            }
+            @Override public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+                if (newState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    // sec_play_btn.setAlpha(0); queue_button.setAlpha(1);
+                    sec_play_btn.setVisibility(View.GONE);
+                    queue_button.setVisibility(View.VISIBLE);
+                } else if (newState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                    // sec_play_btn.setAlpha(1); queue_button.setAlpha(0);
+                    sec_play_btn.setVisibility(View.VISIBLE);
+                    queue_button.setVisibility(View.GONE);
+
+                } else if (newState == SlidingUpPanelLayout.PanelState.DRAGGING)
+                {
+                    sec_play_btn.setVisibility(View.VISIBLE);
+                    queue_button.setVisibility(View.VISIBLE);
+                }
+                queue_fragment_view.setVisibility(View.GONE);
+            }
+        });
 
         // TextViews
         track_title = findViewById(R.id.track_title);
