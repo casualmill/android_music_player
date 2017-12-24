@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
     // main_info collector
     private TextView track_title, track_author;
-    private Button main_play_btn, sec_play_btn;
+    private Button main_play_btn, sec_play_btn, queue_button;
     private ImageView main_albumArt, sec_albumArt;
     private SeekBar seekBar;
     private boolean update_ui = false;
@@ -106,6 +106,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         slidingUpPanelLayout = findViewById(R.id.slidingUpPanel);
+        slidingUpPanelLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+                sec_play_btn.setAlpha(slideOffset);
+                queue_button.setAlpha(1 - slideOffset);
+            }
+            @Override public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) { }
+        });
 
         // toolbar
         // Toolbar toolBar = findViewById(R.id.toolbar);
@@ -136,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         main_play_btn.setOnClickListener(playBtnListener);
         sec_play_btn = findViewById(R.id.sec_play_button);
         sec_play_btn.setOnClickListener(playBtnListener);
+        queue_button = findViewById(R.id.toggle_track_queue_button);
 
         // TextViews
         track_title = findViewById(R.id.track_title);
