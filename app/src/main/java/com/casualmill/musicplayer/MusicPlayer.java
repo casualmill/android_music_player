@@ -33,6 +33,9 @@ public class MusicPlayer {
     private static boolean serviceBound = false;
     private static MediaControllerCompat mController;
 
+    // COMMANDS
+    public static final String COMMAND_SET_TRACK_QUEUE = "SET TRACK QUEUE";
+
     public static void init(Context ctx) {
         if (musicIntent == null) {
             musicIntent = new Intent(ctx, MusicService.class);
@@ -65,7 +68,6 @@ public class MusicPlayer {
 
     public static void playTrackAtIndex(int index){
         mController.getTransportControls().skipToQueueItem(index);
-        mController.
     }
 
     public static boolean playPause() {

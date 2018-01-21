@@ -11,8 +11,10 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -22,6 +24,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import com.casualmill.musicplayer.MusicData;
+import com.casualmill.musicplayer.MusicPlayer;
 import com.casualmill.musicplayer.R;
 import com.casualmill.musicplayer.activities.MainActivity;
 import com.casualmill.musicplayer.events.MusicServiceEvent;
@@ -113,6 +116,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 mPlayer.pause();
 
                 mSession.setPlaybackState(new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, mPlayer.getCurrentPosition(), 1).build());
+            }
+
+            @Override
+            public void onCommand(String command, Bundle extras, ResultReceiver cb) {
+                super.onCommand(command, extras, cb);
+                switch (command) {
+                    // 
+                    case MusicPlayer.COMMAND_SET_TRACK_QUEUE:
+                        break;
+                }
             }
 
             @Override

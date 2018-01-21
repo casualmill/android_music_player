@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 
 import com.casualmill.musicplayer.R;
 
+import org.greenrobot.eventbus.Subscribe;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -27,4 +29,7 @@ public class QueueFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_queue, container, false);
     }
 
+
+    @Subscribe
+    public void MusicServ
 }
